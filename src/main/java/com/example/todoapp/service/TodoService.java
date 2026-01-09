@@ -1,7 +1,10 @@
 package com.example.todoapp.service;
 
+import com.example.todoapp.exception.ResourceNotFoundException;
 import com.example.todoapp.model.Todo;
 import com.example.todoapp.repository.TodoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,19 +14,27 @@ import java.util.Optional;
 @Service
 public class TodoService {
     
-    @Autowired
-    private TodoRepository todoRepository;
+    private static final Logger logger = LoggerFactory.getLogger(TodoService.class);
+    
+    private final TodoRepository todoRepository;
+    
+    public TodoService(TodoRepository todoRepository) {
+        this.todoRepository = todoRepository;
+    }
     
     public List<Todo> getAllTodos() {
-        return todoRepository.findAllOrderByCreatedAtDesc();
+        logger.info("Fetching all todos");
+        return todoRepository.findAllOrderByCreatedAtDesc(null).getContent();
     }
     
     public List<Todo> getActiveTodos() {
-        return todoRepository.findActiveTodosOrderByCreatedAtDesc();
+        logger.info("Fetching active todos");
+        return todoRepository.findActiveTodosOrderByCreatedAtDesc(null).getContent();
     }
     
     public List<Todo> getCompletedTodos() {
-        return todoRepository.findByCompleted(true);
+        logger.info("Fetching completed todos");
+        return todoRepository.findByCompleted(true, null).getContent();
     }
     
     public Optional<Todo> getTodoById(Long id) {
@@ -35,25 +46,23 @@ public class TodoService {
     }
     
     public Todo updateTodo(Long id, Todo todoDetails) {
-        Optional<Todo> optionalTodo = todoRepository.findById(id);
-        if (optionalTodo.isPresent()) {
-            Todo todo = optionalTodo.get();
-            todo.setTitle(todoDetails.getTitle());
-            todo.setDescription(todoDetails.getDescription());
-            todo.setCompleted(todoDetails.isCompleted());
-            return todoRepository.save(todo);
-        }
-        return null;
+        return todoRepository.findById(id)
+                .map(todo -> {
+                    todo.setTitle(todoDetails.getTitle());
+                    todo.setDescription(todoDetails.getDescription());
+                    todo.setCompleted(todoDetails.isCompleted());
+                    return todoRepository.save(todo);
+                })
+                .orElseThrow(() -> new ResourceNotFoundException("Todo not found with id: " + id));
     }
     
     public Todo toggleTodoCompletion(Long id) {
-        Optional<Todo> optionalTodo = todoRepository.findById(id);
-        if (optionalTodo.isPresent()) {
-            Todo todo = optionalTodo.get();
-            todo.setCompleted(!todo.isCompleted());
-            return todoRepository.save(todo);
-        }
-        return null;
+        return todoRepository.findById(id)
+                .map(todo -> {
+                    todo.setCompleted(!todo.isCompleted());
+                    return todoRepository.save(todo);
+                })
+                .orElseThrow(() -> new ResourceNotFoundException("Todo not found with id: " + id));
     }
     
     public boolean deleteTodo(Long id) {

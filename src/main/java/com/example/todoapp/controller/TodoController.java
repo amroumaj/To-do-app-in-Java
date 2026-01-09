@@ -2,6 +2,8 @@ package com.example.todoapp.controller;
 
 import com.example.todoapp.model.Todo;
 import com.example.todoapp.service.TodoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,11 +14,16 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/todos")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")
 public class TodoController {
     
-    @Autowired
-    private TodoService todoService;
+    private static final Logger logger = LoggerFactory.getLogger(TodoController.class);
+    
+    private final TodoService todoService;
+    
+    public TodoController(TodoService todoService) {
+        this.todoService = todoService;
+    }
     
     @GetMapping
     public ResponseEntity<List<Todo>> getAllTodos() {
@@ -52,19 +59,13 @@ public class TodoController {
     @PutMapping("/{id}")
     public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todoDetails) {
         Todo updatedTodo = todoService.updateTodo(id, todoDetails);
-        if (updatedTodo != null) {
-            return ResponseEntity.ok(updatedTodo);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(updatedTodo);
     }
     
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<Todo> toggleTodoCompletion(@PathVariable Long id) {
         Todo updatedTodo = todoService.toggleTodoCompletion(id);
-        if (updatedTodo != null) {
-            return ResponseEntity.ok(updatedTodo);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(updatedTodo);
     }
     
     @DeleteMapping("/{id}")
