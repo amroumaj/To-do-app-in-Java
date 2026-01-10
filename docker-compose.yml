@@ -1,7 +1,7 @@
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:latest
     container_name: todo-postgres
     environment:
       POSTGRES_DB: todo_db
@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/
     restart: unless-stopped
 
 volumes:
